@@ -1,17 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'onboarding_screen.dart';
 import 'splash_screen.dart';
 
-void main() {
-  runApp(const CineClipApp());
+const _onboardingCompletedKey = 'onboarding_completed';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final preferences = await SharedPreferences.getInstance();
+  runApp(
+    CineClipApp(
+      onboardingCompleted:
+          preferences.getBool(_onboardingCompletedKey) ?? false,
+    ),
+  );
 }
 
-class CineClipApp extends StatelessWidget {
-  const CineClipApp({super.key});
+class CineClipApp extends StatefulWidget {
+  const CineClipApp({super.key, this.onboardingCompleted = false});
+
+  final bool onboardingCompleted;
+
+  @override
+  State<CineClipApp> createState() => _CineClipAppState();
+}
+
+class _CineClipAppState extends State<CineClipApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  Future<void> _completeOnboarding() async {
+    final preferences = await SharedPreferences.getInstance();
+    final saved = await preferences.setBool(_onboardingCompletedKey, true);
+    if (!saved) {
+      throw StateError('Could not save onboarding completion.');
+    }
+
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) {
+      throw StateError('The app navigator is not available.');
+    }
+    navigator.pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const CineClipHomeScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'CineClip',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -23,7 +60,11 @@ class CineClipApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF020B25),
         useMaterial3: true,
       ),
-      home: const CineClipSplashScreen(nextScreen: CineClipHomeScreen()),
+      home: CineClipSplashScreen(
+        nextScreen: widget.onboardingCompleted
+            ? const CineClipHomeScreen()
+            : OnboardingScreen(onGetStarted: _completeOnboarding),
+      ),
     );
   }
 }

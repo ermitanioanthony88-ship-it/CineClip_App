@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'home_screen.dart';
 import 'onboarding_screen.dart';
+import 'settings_screen.dart';
 import 'splash_screen.dart';
 
 const _onboardingCompletedKey = 'onboarding_completed';
+
+ThemeMode _themeModeFromPreference(String? value) => switch (value) {
+  'dark' => ThemeMode.dark,
+  'light' => ThemeMode.light,
+  _ => ThemeMode.system,
+};
+
+String _preferenceValueForThemeMode(ThemeMode mode) => switch (mode) {
+  ThemeMode.system => 'system',
+  ThemeMode.dark => 'dark',
+  ThemeMode.light => 'light',
+};
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,14 +27,22 @@ Future<void> main() async {
     CineClipApp(
       onboardingCompleted:
           preferences.getBool(_onboardingCompletedKey) ?? false,
+      themeMode: _themeModeFromPreference(
+        preferences.getString(settingsThemeModeKey),
+      ),
     ),
   );
 }
 
 class CineClipApp extends StatefulWidget {
-  const CineClipApp({super.key, this.onboardingCompleted = false});
+  const CineClipApp({
+    super.key,
+    this.onboardingCompleted = false,
+    this.themeMode = ThemeMode.system,
+  });
 
   final bool onboardingCompleted;
+  final ThemeMode themeMode;
 
   @override
   State<CineClipApp> createState() => _CineClipAppState();
@@ -28,6 +50,32 @@ class CineClipApp extends StatefulWidget {
 
 class _CineClipAppState extends State<CineClipApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
+  late ThemeMode _themeMode = widget.themeMode;
+
+  Future<void> _changeThemeMode(ThemeMode mode) async {
+    final preferences = await SharedPreferences.getInstance();
+    final saved = await preferences.setString(
+      settingsThemeModeKey,
+      _preferenceValueForThemeMode(mode),
+    );
+    if (!saved) throw StateError('Could not save appearance setting.');
+    if (mounted) setState(() => _themeMode = mode);
+  }
+
+  void _openSettings() {
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) {
+      throw StateError('The app navigator is not available.');
+    }
+    navigator.push<void>(
+      MaterialPageRoute(
+        builder: (_) => CineClipSettingsScreen(
+          themeMode: _themeMode,
+          onThemeModeChanged: _changeThemeMode,
+        ),
+      ),
+    );
+  }
 
   Future<void> _completeOnboarding() async {
     final preferences = await SharedPreferences.getInstance();
@@ -41,7 +89,9 @@ class _CineClipAppState extends State<CineClipApp> {
       throw StateError('The app navigator is not available.');
     }
     navigator.pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const CineClipHomeScreen()),
+    MaterialPageRoute<void>(
+      builder: (_) => CineClipHomeScreen(onOpenSettings: _openSettings),
+    ),
     );
   }
 
@@ -51,7 +101,17 @@ class _CineClipAppState extends State<CineClipApp> {
       navigatorKey: _navigatorKey,
       title: 'CineClip',
       debugShowCheckedModeBanner: false,
+      themeMode: _themeMode,
       theme: ThemeData(
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF21C8FF),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF4F7FB),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF21C8FF),
@@ -62,42 +122,8 @@ class _CineClipAppState extends State<CineClipApp> {
       ),
       home: CineClipSplashScreen(
         nextScreen: widget.onboardingCompleted
-            ? const CineClipHomeScreen()
+            ? CineClipHomeScreen(onOpenSettings: _openSettings)
             : OnboardingScreen(onGetStarted: _completeOnboarding),
-      ),
-    );
-  }
-}
-
-class CineClipHomeScreen extends StatelessWidget {
-  const CineClipHomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'CineClip',
-                style: TextStyle(
-                  color: Color(0xFF43D8FF),
-                  fontSize: 36,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Your next story starts here.',
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(color: Colors.white70),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

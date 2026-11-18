@@ -1,0 +1,89 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Get Flutter dependencies",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"pub",
+				"get"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirm Flutter analyze",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"analyze"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirm Flutter tests",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify widget tests",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify widget tests retry",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify empty-library test",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"test",
+				"--no-pub",
+				"test/widget_test.dart",
+				"--plain-name",
+				"empty library opens a creation flow that validates photos"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Analyze CineClip changes",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"analyze"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Flutter Analyze",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"analyze"
+			],
+			"isBackground": false
+		}
+	]
+}
